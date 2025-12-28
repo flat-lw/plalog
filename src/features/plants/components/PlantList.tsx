@@ -6,7 +6,11 @@ import { ListItem, EmptyState } from '@/components/common'
 import { formatRelativeTime } from '@/utils/date'
 import type { WateringLog } from '@/db/models'
 
-export function PlantList() {
+interface PlantListProps {
+  searchQuery?: string
+}
+
+export function PlantList({ searchQuery = '' }: PlantListProps) {
   const navigate = useNavigate()
 
   const plants = useLiveQuery(() => db.plants.filter((p) => p.isActive).toArray())
@@ -15,12 +19,29 @@ export function PlantList() {
 
   if (!plants) return null
 
+  // 検索フィルタリング
+  const filteredPlants = searchQuery.trim()
+    ? plants.filter((plant) =>
+        plant.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : plants
+
   if (plants.length === 0) {
     return (
       <EmptyState
         icon={<Sprout size={48} />}
         title="植物がありません"
         description="右下の「＋ 追加」ボタンから植物を追加しましょう"
+      />
+    )
+  }
+
+  if (filteredPlants.length === 0) {
+    return (
+      <EmptyState
+        icon={<Sprout size={48} />}
+        title="該当する植物がありません"
+        description="検索条件を変更してみてください"
       />
     )
   }
@@ -41,7 +62,7 @@ export function PlantList() {
 
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-      {plants.map((plant) => {
+      {filteredPlants.map((plant) => {
         const locationName = getLocationName(plant.currentLocationId)
         const lastWatering = getLastWatering(plant.id)
         const subtitle = [
