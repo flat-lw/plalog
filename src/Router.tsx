@@ -6,6 +6,7 @@ import { WateringHistoryPage } from '@/features/watering/pages/WateringHistoryPa
 import { LocationListPage } from '@/features/locations/pages/LocationListPage'
 import { LocationDetailPage } from '@/features/locations/pages/LocationDetailPage'
 import { ExportPage, ImportPage, AboutPage, GoogleDriveSyncPage } from '@/features/settings'
+import { CsvImportPage } from '@/features/environment'
 
 export function Router() {
   return (
@@ -20,6 +21,7 @@ export function Router() {
       <Route path="/settings/export" element={<ExportPage />} />
       <Route path="/settings/import" element={<ImportPage />} />
       <Route path="/settings/google-drive" element={<GoogleDriveSyncPage />} />
+      <Route path="/settings/environment-import" element={<CsvImportPage />} />
       <Route path="/about" element={<AboutPage />} />
     </Routes>
   )

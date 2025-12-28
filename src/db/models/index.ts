@@ -77,14 +77,41 @@ export interface FloweringRecord {
   updatedAt: Date
 }
 
+export type DataSourceType =
+  | 'switchbot-csv'
+  | 'inkbird-csv'
+  | 'generic-csv'
+  | 'manual'
+  | 'open-meteo'
+  | 'switchbot-api'
+  | 'home-assistant'
+
 export interface EnvironmentLog {
   id: string
   locationId: string
   timestamp: Date
   temperature?: number
   humidity?: number
-  source?: string
+  source?: DataSourceType
   notes?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface DailyEnvironmentSummary {
+  id: string
+  locationId: string
+  date: string // "YYYY-MM-DD"
+  tempMax: number
+  tempMin: number
+  tempAvg: number
+  humidityMax?: number
+  humidityMin?: number
+  humidityAvg?: number
+  dataPoints: number
+  source: DataSourceType
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface ExportData {
@@ -99,5 +126,6 @@ export interface ExportData {
     growthEvents: GrowthEvent[]
     floweringRecords: FloweringRecord[]
     environmentLogs: EnvironmentLog[]
+    dailyEnvironmentSummaries: DailyEnvironmentSummary[]
   }
 }

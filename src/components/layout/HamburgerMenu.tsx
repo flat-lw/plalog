@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { X, Download, Upload, Cloud, Info } from 'lucide-react'
+import { X, Download, Upload, Cloud, Thermometer, Info } from 'lucide-react'
 
 interface HamburgerMenuProps {
   isOpen: boolean
@@ -10,6 +10,7 @@ const menuItems = [
   { path: '/settings/export', label: 'データエクスポート', icon: Download },
   { path: '/settings/import', label: 'データインポート', icon: Upload },
   { path: '/settings/google-drive', label: 'Google Drive 同期', icon: Cloud },
+  { path: '/settings/environment-import', label: '環境データインポート', icon: Thermometer },
   { path: '/about', label: 'このアプリについて', icon: Info },
 ]
 

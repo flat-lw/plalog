@@ -10,6 +10,7 @@ export async function getAllData(): Promise<ExportData['data']> {
     growthEvents: await db.growthEvents.toArray(),
     floweringRecords: await db.floweringRecords.toArray(),
     environmentLogs: await db.environmentLogs.toArray(),
+    dailyEnvironmentSummaries: await db.dailyEnvironmentSummaries.toArray(),
   }
 }
 
@@ -46,6 +47,7 @@ export async function importDataFromObject(
       db.growthEvents,
       db.floweringRecords,
       db.environmentLogs,
+      db.dailyEnvironmentSummaries,
     ],
     async () => {
       await Promise.all([
@@ -56,6 +58,7 @@ export async function importDataFromObject(
         db.growthEvents.clear(),
         db.floweringRecords.clear(),
         db.environmentLogs.clear(),
+        db.dailyEnvironmentSummaries.clear(),
       ])
 
       await Promise.all([
@@ -66,6 +69,9 @@ export async function importDataFromObject(
         db.growthEvents.bulkAdd(data.growthEvents),
         db.floweringRecords.bulkAdd(data.floweringRecords),
         db.environmentLogs.bulkAdd(data.environmentLogs),
+        data.dailyEnvironmentSummaries?.length > 0
+          ? db.dailyEnvironmentSummaries.bulkAdd(data.dailyEnvironmentSummaries)
+          : Promise.resolve(),
       ])
     }
   )
@@ -88,6 +94,7 @@ export async function importData(jsonString: string): Promise<void> {
       db.growthEvents,
       db.floweringRecords,
       db.environmentLogs,
+      db.dailyEnvironmentSummaries,
     ],
     async () => {
       await Promise.all([
@@ -98,6 +105,7 @@ export async function importData(jsonString: string): Promise<void> {
         db.growthEvents.clear(),
         db.floweringRecords.clear(),
         db.environmentLogs.clear(),
+        db.dailyEnvironmentSummaries.clear(),
       ])
 
       await Promise.all([
@@ -108,6 +116,9 @@ export async function importData(jsonString: string): Promise<void> {
         db.growthEvents.bulkAdd(data.data.growthEvents),
         db.floweringRecords.bulkAdd(data.data.floweringRecords),
         db.environmentLogs.bulkAdd(data.data.environmentLogs),
+        data.data.dailyEnvironmentSummaries?.length > 0
+          ? db.dailyEnvironmentSummaries.bulkAdd(data.data.dailyEnvironmentSummaries)
+          : Promise.resolve(),
       ])
     }
   )
