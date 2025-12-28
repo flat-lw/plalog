@@ -45,4 +45,15 @@ export const wateringRepository = {
   async delete(id: string): Promise<void> {
     await db.wateringLogs.delete(id)
   },
+
+  async update(
+    id: string,
+    data: Partial<Omit<WateringLog, 'id'>>
+  ): Promise<void> {
+    await db.wateringLogs.update(id, data)
+  },
+
+  async getAll(): Promise<WateringLog[]> {
+    return db.wateringLogs.reverse().sortBy('timestamp')
+  },
 }
