@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { MapPin, Sprout, Droplets } from 'lucide-react'
+import { MapPin, Sprout, Droplets, History } from 'lucide-react'
 import { db } from '@/db/database'
 import { Header, PageLayout, HamburgerMenu } from '@/components/layout'
 import { Button, Input, Modal, TextArea } from '@/components/ui'
@@ -22,6 +23,7 @@ function getLocalDateTimeString(date: Date): string {
 }
 
 export function WateringPage() {
+  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('location')
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([])
@@ -164,6 +166,20 @@ export function WateringPage() {
                       </button>
                     )
                   })}
+
+                  {/* 過去の水やり一覧へのリンク */}
+                  <button
+                    onClick={() => navigate('/watering/history')}
+                    className="w-full text-left p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 mt-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <History size={20} className="text-gray-500" />
+                      <span className="font-medium text-gray-700">過去の水やり一覧</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1 ml-7">
+                      すべての水やり履歴を確認・編集
+                    </p>
+                  </button>
                 </div>
               )}
             </>
