@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { PlantListPage } from '@/features/plants/pages/PlantListPage'
 import { PlantDetailPage } from '@/features/plants/pages/PlantDetailPage'
+import { SpeciesSummaryPage } from '@/features/plants/pages/SpeciesSummaryPage'
 import { WateringPage } from '@/features/watering/pages/WateringPage'
 import { WateringHistoryPage } from '@/features/watering/pages/WateringHistoryPage'
 import { LocationListPage } from '@/features/locations/pages/LocationListPage'
@@ -14,6 +15,7 @@ export function Router() {
       <Route path="/" element={<Navigate to="/plants" replace />} />
       <Route path="/plants" element={<PlantListPage />} />
       <Route path="/plants/:id" element={<PlantDetailPage />} />
+      <Route path="/species/:species" element={<SpeciesSummaryPage />} />
       <Route path="/watering" element={<WateringPage />} />
       <Route path="/watering/history" element={<WateringHistoryPage />} />
       <Route path="/locations" element={<LocationListPage />} />

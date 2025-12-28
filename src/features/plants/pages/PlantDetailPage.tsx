@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Droplets, Flower2, Calendar } from 'lucide-react'
+import { Droplets, Flower2, Calendar, ChevronRight } from 'lucide-react'
 import { db } from '@/db/database'
 import { Header, PageLayout } from '@/components/layout'
 import { Button, Modal } from '@/components/ui'
@@ -74,7 +74,13 @@ export function PlantDetailPage() {
         {/* 植物情報 */}
         <div className="p-4 bg-white border-b">
           {plant.species && (
-            <p className="text-sm text-gray-600">種名: {plant.species}</p>
+            <button
+              onClick={() => navigate(`/species/${encodeURIComponent(plant.species!)}`)}
+              className="flex items-center text-sm text-primary-600 hover:text-primary-700 hover:underline"
+            >
+              種名: {plant.species}
+              <ChevronRight size={16} className="ml-1" />
+            </button>
           )}
           {location && (
             <p className="text-sm text-gray-600">場所: {location.name}</p>
