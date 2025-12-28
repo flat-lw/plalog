@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Droplets } from 'lucide-react'
 import { db } from '@/db/database'
-import { Button, Modal, TextArea } from '@/components/ui'
+import { Button, Input, Modal, TextArea } from '@/components/ui'
 import { FAB, EmptyState } from '@/components/common'
 import { wateringRepository } from '@/db/repositories'
 import { useToast } from '@/hooks/useToast'
@@ -12,9 +12,19 @@ interface WateringTabProps {
   plantId: string
 }
 
+function getLocalDateTimeString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 export function WateringTab({ plantId }: WateringTabProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [notes, setNotes] = useState('')
+  const [selectedDateTime, setSelectedDateTime] = useState('')
   const { showToast } = useToast()
 
   const wateringLogs = useLiveQuery(
@@ -22,14 +32,21 @@ export function WateringTab({ plantId }: WateringTabProps) {
     [plantId]
   )
 
+  const openModal = () => {
+    setSelectedDateTime(getLocalDateTimeString(new Date()))
+    setIsModalOpen(true)
+  }
+
   const handleSubmit = async () => {
+    const timestamp = selectedDateTime ? new Date(selectedDateTime) : new Date()
     await wateringRepository.create({
       plantId,
-      timestamp: new Date(),
+      timestamp,
       notes: notes.trim() || undefined,
     })
     setIsModalOpen(false)
     setNotes('')
+    setSelectedDateTime('')
     showToast('水やりを記録しました')
   }
 
@@ -62,7 +79,7 @@ export function WateringTab({ plantId }: WateringTabProps) {
         </div>
       )}
 
-      <FAB onClick={() => setIsModalOpen(true)}>
+      <FAB onClick={openModal}>
         <Droplets size={20} />
         水やり記録
       </FAB>
@@ -73,6 +90,12 @@ export function WateringTab({ plantId }: WateringTabProps) {
         title="水やりを記録"
       >
         <div className="space-y-4">
+          <Input
+            label="日時"
+            type="datetime-local"
+            value={selectedDateTime}
+            onChange={(e) => setSelectedDateTime(e.target.value)}
+          />
           <TextArea
             label="メモ（任意）"
             value={notes}

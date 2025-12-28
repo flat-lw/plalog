@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { MapPin, Sprout, Droplets } from 'lucide-react'
 import { db } from '@/db/database'
 import { Header, PageLayout, HamburgerMenu } from '@/components/layout'
-import { Button, Modal, TextArea } from '@/components/ui'
+import { Button, Input, Modal, TextArea } from '@/components/ui'
 import { EmptyState } from '@/components/common'
 import { wateringRepository } from '@/db/repositories'
 import { useToast } from '@/hooks/useToast'
@@ -12,6 +12,15 @@ import type { Plant, WateringLog } from '@/db/models'
 
 type TabType = 'location' | 'select'
 
+function getLocalDateTimeString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 export function WateringPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('location')
@@ -19,6 +28,7 @@ export function WateringPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalPlantIds, setModalPlantIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
+  const [selectedDateTime, setSelectedDateTime] = useState('')
   const { showToast } = useToast()
 
   const plants = useLiveQuery(() => db.plants.filter((p) => p.isActive).toArray())
@@ -50,23 +60,29 @@ export function WateringPage() {
     return lastWaterings[0]?.timestamp
   }
 
+  const openModal = (plantIds: string[]) => {
+    setModalPlantIds(plantIds)
+    setSelectedDateTime(getLocalDateTimeString(new Date()))
+    setIsModalOpen(true)
+  }
+
   const handleLocationClick = (locationId: string) => {
     const locationPlants = getPlantsByLocation(locationId)
     if (locationPlants.length === 0) return
-    setModalPlantIds(locationPlants.map((p) => p.id))
-    setIsModalOpen(true)
+    openModal(locationPlants.map((p) => p.id))
   }
 
   const handleSelectSubmit = () => {
     if (selectedPlantIds.length === 0) return
-    setModalPlantIds(selectedPlantIds)
-    setIsModalOpen(true)
+    openModal(selectedPlantIds)
   }
 
   const handleWateringSubmit = async () => {
-    await wateringRepository.createBatch(modalPlantIds, new Date(), notes.trim() || undefined)
+    const timestamp = selectedDateTime ? new Date(selectedDateTime) : new Date()
+    await wateringRepository.createBatch(modalPlantIds, timestamp, notes.trim() || undefined)
     setIsModalOpen(false)
     setNotes('')
+    setSelectedDateTime('')
     setSelectedPlantIds([])
     showToast(`${modalPlantIds.length}株に水やりを記録しました`)
   }
@@ -220,6 +236,12 @@ export function WateringPage() {
               ))}
             </ul>
           </div>
+          <Input
+            label="日時"
+            type="datetime-local"
+            value={selectedDateTime}
+            onChange={(e) => setSelectedDateTime(e.target.value)}
+          />
           <TextArea
             label="メモ（任意）"
             value={notes}
