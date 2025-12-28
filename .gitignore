@@ -26,3 +26,7 @@ dist-ssr
 # Nix
 .direnv
 result
+
+# Environment variables
+.env
+.env.local

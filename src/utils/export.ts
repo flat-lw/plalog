@@ -1,20 +1,24 @@
 import { db } from '@/db/database'
 import type { ExportData } from '@/db/models'
 
+export async function getAllData(): Promise<ExportData['data']> {
+  return {
+    plants: await db.plants.toArray(),
+    locations: await db.locations.toArray(),
+    plantLocationHistory: await db.plantLocationHistory.toArray(),
+    wateringLogs: await db.wateringLogs.toArray(),
+    growthEvents: await db.growthEvents.toArray(),
+    floweringRecords: await db.floweringRecords.toArray(),
+    environmentLogs: await db.environmentLogs.toArray(),
+  }
+}
+
 export async function exportData(): Promise<string> {
   const data: ExportData = {
     version: 1,
     exportedAt: new Date().toISOString(),
     app: 'plalog',
-    data: {
-      plants: await db.plants.toArray(),
-      locations: await db.locations.toArray(),
-      plantLocationHistory: await db.plantLocationHistory.toArray(),
-      wateringLogs: await db.wateringLogs.toArray(),
-      growthEvents: await db.growthEvents.toArray(),
-      floweringRecords: await db.floweringRecords.toArray(),
-      environmentLogs: await db.environmentLogs.toArray(),
-    },
+    data: await getAllData(),
   }
   return JSON.stringify(data, null, 2)
 }
@@ -27,6 +31,44 @@ export function downloadJson(data: string, filename: string): void {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export async function importDataFromObject(
+  data: ExportData['data']
+): Promise<void> {
+  await db.transaction(
+    'rw',
+    [
+      db.plants,
+      db.locations,
+      db.plantLocationHistory,
+      db.wateringLogs,
+      db.growthEvents,
+      db.floweringRecords,
+      db.environmentLogs,
+    ],
+    async () => {
+      await Promise.all([
+        db.plants.clear(),
+        db.locations.clear(),
+        db.plantLocationHistory.clear(),
+        db.wateringLogs.clear(),
+        db.growthEvents.clear(),
+        db.floweringRecords.clear(),
+        db.environmentLogs.clear(),
+      ])
+
+      await Promise.all([
+        db.plants.bulkAdd(data.plants),
+        db.locations.bulkAdd(data.locations),
+        db.plantLocationHistory.bulkAdd(data.plantLocationHistory),
+        db.wateringLogs.bulkAdd(data.wateringLogs),
+        db.growthEvents.bulkAdd(data.growthEvents),
+        db.floweringRecords.bulkAdd(data.floweringRecords),
+        db.environmentLogs.bulkAdd(data.environmentLogs),
+      ])
+    }
+  )
 }
 
 export async function importData(jsonString: string): Promise<void> {

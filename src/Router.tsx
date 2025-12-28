@@ -5,7 +5,7 @@ import { WateringPage } from '@/features/watering/pages/WateringPage'
 import { WateringHistoryPage } from '@/features/watering/pages/WateringHistoryPage'
 import { LocationListPage } from '@/features/locations/pages/LocationListPage'
 import { LocationDetailPage } from '@/features/locations/pages/LocationDetailPage'
-import { ExportPage, ImportPage, AboutPage } from '@/features/settings'
+import { ExportPage, ImportPage, AboutPage, GoogleDriveSyncPage } from '@/features/settings'
 
 export function Router() {
   return (
@@ -19,6 +19,7 @@ export function Router() {
       <Route path="/locations/:id" element={<LocationDetailPage />} />
       <Route path="/settings/export" element={<ExportPage />} />
       <Route path="/settings/import" element={<ImportPage />} />
+      <Route path="/settings/google-drive" element={<GoogleDriveSyncPage />} />
       <Route path="/about" element={<AboutPage />} />
     </Routes>
   )
