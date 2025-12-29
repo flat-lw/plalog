@@ -83,7 +83,13 @@ export function PlantDetailPage() {
             </button>
           )}
           {location && (
-            <p className="text-sm text-gray-600">場所: {location.name}</p>
+            <button
+              onClick={() => navigate(`/locations/${location.id}`)}
+              className="flex items-center text-sm text-primary-600 hover:text-primary-700 hover:underline"
+            >
+              場所: {location.name}
+              <ChevronRight size={16} className="ml-1" />
+            </button>
           )}
           {plant.acquiredAt && (
             <p className="text-sm text-gray-600">入手日: {formatDate(plant.acquiredAt)}</p>
