@@ -8,6 +8,7 @@ import { LocationListPage } from '@/features/locations/pages/LocationListPage'
 import { LocationDetailPage } from '@/features/locations/pages/LocationDetailPage'
 import { ExportPage, ImportPage, AboutPage, GoogleDriveSyncPage } from '@/features/settings'
 import { CsvImportPage } from '@/features/environment'
+import { PlantPassportExportPage } from '@/features/plant-passport'
 
 export function Router() {
   return (
@@ -15,6 +16,7 @@ export function Router() {
       <Route path="/" element={<Navigate to="/plants" replace />} />
       <Route path="/plants" element={<PlantListPage />} />
       <Route path="/plants/:id" element={<PlantDetailPage />} />
+      <Route path="/plants/:id/passport" element={<PlantPassportExportPage />} />
       <Route path="/species/:species" element={<SpeciesSummaryPage />} />
       <Route path="/watering" element={<WateringPage />} />
       <Route path="/watering/history" element={<WateringHistoryPage />} />

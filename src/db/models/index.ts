@@ -1,3 +1,10 @@
+export interface InheritedInfo {
+  displayName?: string
+  contact?: string
+  managementDays: number
+  importedAt: Date
+}
+
 export interface Plant {
   id: string
   name: string
@@ -8,6 +15,15 @@ export interface Plant {
   notes?: string
   isActive: boolean
   isDead?: boolean
+  inheritedFrom?: InheritedInfo
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface UserProfile {
+  id: string // 'default'
+  displayName?: string
+  contact?: string
   createdAt: Date
   updatedAt: Date
 }
