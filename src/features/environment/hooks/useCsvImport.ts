@@ -21,7 +21,7 @@ export function useCsvImport() {
     error: null,
   })
 
-  const selectFile = useCallback(async (file: File) => {
+  const selectFile = useCallback(async (file: File): Promise<boolean> => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
     try {
@@ -37,7 +37,7 @@ export function useCsvImport() {
           isLoading: false,
           error: '対応していないCSV形式です',
         }))
-        return
+        return false
       }
 
       setState((prev) => ({
@@ -49,6 +49,7 @@ export function useCsvImport() {
         isLoading: false,
         error: null,
       }))
+      return true
     } catch {
       setState((prev) => ({
         ...prev,
@@ -58,6 +59,7 @@ export function useCsvImport() {
         isLoading: false,
         error: 'ファイルの読み込みに失敗しました',
       }))
+      return false
     }
   }, [])
 

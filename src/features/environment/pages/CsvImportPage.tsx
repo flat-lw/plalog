@@ -48,8 +48,8 @@ export function CsvImportPage() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      await selectFile(selectedFile)
-      if (!error) {
+      const success = await selectFile(selectedFile)
+      if (success) {
         setPageState('preview')
       }
     }
