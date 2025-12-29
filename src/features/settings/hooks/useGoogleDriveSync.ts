@@ -4,6 +4,7 @@ import { getAllData, importDataFromObject } from '@/utils/export'
 
 interface SyncState {
   isAuthenticated: boolean
+  isConnected: boolean
   isLoading: boolean
   error: string | null
   lastSyncedAt: string | null
@@ -12,9 +13,10 @@ interface SyncState {
 export function useGoogleDriveSync() {
   const [state, setState] = useState<SyncState>({
     isAuthenticated: googleDriveService.isAuthenticated(),
+    isConnected: googleDriveService.isConnected(),
     isLoading: false,
     error: null,
-    lastSyncedAt: null,
+    lastSyncedAt: googleDriveService.getLastSyncTime(),
   })
 
   const connect = useCallback(async () => {
@@ -23,11 +25,18 @@ export function useGoogleDriveSync() {
     try {
       await googleDriveService.authenticate()
 
+      // 連携フラグを保存
+      googleDriveService.setConnected(true)
+
       // 既存のファイルがあれば最終同期日時を取得
       const metadata = await googleDriveService.getFileMetadata()
+      if (metadata?.modifiedTime) {
+        googleDriveService.setLastSyncTime(metadata.modifiedTime)
+      }
 
       setState({
         isAuthenticated: true,
+        isConnected: true,
         isLoading: false,
         error: null,
         lastSyncedAt: metadata?.modifiedTime || null,
@@ -44,8 +53,10 @@ export function useGoogleDriveSync() {
 
   const disconnect = useCallback(() => {
     googleDriveService.disconnect()
+    googleDriveService.setConnected(false)
     setState({
       isAuthenticated: false,
+      isConnected: false,
       isLoading: false,
       error: null,
       lastSyncedAt: null,
@@ -59,10 +70,13 @@ export function useGoogleDriveSync() {
       const data = await getAllData()
       await googleDriveService.upload(data)
 
+      const now = new Date().toISOString()
+      googleDriveService.setLastSyncTime(now)
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        lastSyncedAt: new Date().toISOString(),
+        lastSyncedAt: now,
       }))
 
       return true
@@ -82,6 +96,8 @@ export function useGoogleDriveSync() {
     try {
       const syncData = await googleDriveService.download()
       await importDataFromObject(syncData.data)
+
+      googleDriveService.setLastSyncTime(syncData.syncedAt)
 
       setState((prev) => ({
         ...prev,

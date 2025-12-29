@@ -4,6 +4,8 @@ import type { ExportData } from '@/db/models'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'
 const FILE_NAME = 'plalog-data.json'
+const STORAGE_KEY_CONNECTED = 'plalog_gdrive_connected'
+const STORAGE_KEY_LAST_SYNC = 'plalog_gdrive_last_sync'
 
 export interface GoogleDriveSyncData {
   version: number
@@ -35,6 +37,28 @@ class GoogleDriveService {
     return this.isAuthenticated() ? this.accessToken : null
   }
 
+  // 連携フラグの管理
+  isConnected(): boolean {
+    return localStorage.getItem(STORAGE_KEY_CONNECTED) === 'true'
+  }
+
+  setConnected(connected: boolean): void {
+    if (connected) {
+      localStorage.setItem(STORAGE_KEY_CONNECTED, 'true')
+    } else {
+      localStorage.removeItem(STORAGE_KEY_CONNECTED)
+      localStorage.removeItem(STORAGE_KEY_LAST_SYNC)
+    }
+  }
+
+  getLastSyncTime(): string | null {
+    return localStorage.getItem(STORAGE_KEY_LAST_SYNC)
+  }
+
+  setLastSyncTime(time: string): void {
+    localStorage.setItem(STORAGE_KEY_LAST_SYNC, time)
+  }
+
   async authenticate(): Promise<void> {
     if (!window.google) {
       throw new Error('Google Identity Servicesが読み込まれていません')
@@ -62,6 +86,40 @@ class GoogleDriveService {
         },
       })
 
+      client.requestAccessToken({ prompt: '' })
+    })
+  }
+
+  // サイレント認証（ポップアップなしで試行、失敗したらエラー）
+  async silentAuthenticate(): Promise<boolean> {
+    if (!window.google || !GOOGLE_CLIENT_ID) {
+      return false
+    }
+
+    // 既に認証済みなら成功
+    if (this.isAuthenticated()) {
+      return true
+    }
+
+    return new Promise((resolve) => {
+      const client = window.google!.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: (response) => {
+          if (response.error) {
+            resolve(false)
+            return
+          }
+          this.accessToken = response.access_token
+          this.tokenExpiresAt = Date.now() + response.expires_in * 1000
+          resolve(true)
+        },
+        error_callback: () => {
+          resolve(false)
+        },
+      })
+
+      // prompt: 'none' でサイレント認証を試みる
       client.requestAccessToken({ prompt: '' })
     })
   }
