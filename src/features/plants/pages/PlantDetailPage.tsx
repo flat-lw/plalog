@@ -73,6 +73,9 @@ export function PlantDetailPage() {
       <PageLayout noPadding>
         {/* 植物情報 */}
         <div className="p-4 bg-white border-b">
+          {plant.isDead && (
+            <p className="text-sm text-gray-500 mb-1">☠️ 枯死済み</p>
+          )}
           {plant.species && (
             <button
               onClick={() => navigate(`/species/${encodeURIComponent(plant.species!)}`)}

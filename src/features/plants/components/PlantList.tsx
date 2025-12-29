@@ -13,7 +13,7 @@ interface PlantListProps {
 export function PlantList({ searchQuery = '' }: PlantListProps) {
   const navigate = useNavigate()
 
-  const plants = useLiveQuery(() => db.plants.filter((p) => p.isActive).toArray())
+  const plants = useLiveQuery(() => db.plants.filter((p) => p.isActive && !p.isDead).toArray())
   const locations = useLiveQuery(() => db.locations.toArray())
   const wateringLogs = useLiveQuery(() => db.wateringLogs.toArray())
 

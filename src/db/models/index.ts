@@ -7,6 +7,7 @@ export interface Plant {
   acquiredAt?: Date
   notes?: string
   isActive: boolean
+  isDead?: boolean
   createdAt: Date
   updatedAt: Date
 }

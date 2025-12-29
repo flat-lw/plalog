@@ -17,6 +17,7 @@ export interface PlantFormData {
   currentLocationId?: string
   acquiredAt?: Date
   notes?: string
+  isDead?: boolean
 }
 
 export function PlantForm({ plant, onSubmit, onCancel }: PlantFormProps) {
@@ -27,6 +28,7 @@ export function PlantForm({ plant, onSubmit, onCancel }: PlantFormProps) {
     plant?.acquiredAt ? formatDateForInput(plant.acquiredAt) : ''
   )
   const [notes, setNotes] = useState(plant?.notes || '')
+  const [isDead, setIsDead] = useState(plant?.isDead || false)
 
   const locations = useLiveQuery(() => db.locations.toArray())
 
@@ -40,6 +42,7 @@ export function PlantForm({ plant, onSubmit, onCancel }: PlantFormProps) {
       currentLocationId: locationId || undefined,
       acquiredAt: acquiredAt ? new Date(acquiredAt) : undefined,
       notes: notes.trim() || undefined,
+      isDead,
     })
   }
 
@@ -86,6 +89,18 @@ export function PlantForm({ plant, onSubmit, onCancel }: PlantFormProps) {
         onChange={(e) => setNotes(e.target.value)}
         placeholder="メモを入力"
       />
+
+      {plant && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isDead}
+            onChange={(e) => setIsDead(e.target.checked)}
+            className="w-4 h-4 text-gray-600 rounded border-gray-300 focus:ring-gray-500"
+          />
+          <span className="text-sm text-gray-700">枯死済み</span>
+        </label>
+      )}
 
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
