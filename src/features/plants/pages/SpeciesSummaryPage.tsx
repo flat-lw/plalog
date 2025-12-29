@@ -170,11 +170,15 @@ export function SpeciesSummaryPage() {
           <div className="bg-white rounded-lg overflow-hidden shadow-sm">
             {plants.map((plant) => {
               const locationName = getLocationName(plant.currentLocationId)
+              const subtitle = [
+                plant.isDead ? '☠️ 枯死済み' : null,
+                locationName,
+              ].filter(Boolean).join(' · ')
               return (
                 <ListItem
                   key={plant.id}
                   title={plant.name}
-                  subtitle={locationName || undefined}
+                  subtitle={subtitle || undefined}
                   icon={<Sprout size={20} />}
                   onClick={() => navigate(`/plants/${plant.id}`)}
                 />
