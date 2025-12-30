@@ -7,9 +7,16 @@ import { aggregateToHourly, aggregateToDaily } from './aggregator'
 export async function previewCsv(
   content: string
 ): Promise<ImportPreview | null> {
-  const lines = content.split('\n')
-  const header = lines[0]
+  if (!content || content.trim() === '') {
+    return null
+  }
 
+  const lines = content.split('\n')
+  if (lines.length === 0) {
+    return null
+  }
+
+  const header = lines[0]
   const parser = selectParser(header)
   if (!parser) {
     return null
