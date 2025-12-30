@@ -53,10 +53,23 @@ Location（場所）
 | acquiredAt | Date | | 入手日 |
 | notes | string | | メモ |
 | isActive | boolean | ✓ | 管理中かどうか（デフォルト: true） |
+| isDead | boolean | | 枯死状態（デフォルト: false） |
+| inheritedFrom | InheritedInfo | | Plant Passportからの引き継ぎ情報 |
 | createdAt | Date | ✓ | 作成日時 |
 | updatedAt | Date | ✓ | 更新日時 |
 
-**インデックス**: `id`, `name`, `currentLocationId`
+**インデックス**: `id`, `name`, `species`, `currentLocationId`, `isActive`
+
+#### InheritedInfo（引き継ぎ情報）
+
+Plant Passportからインポートした場合に設定される。
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| displayName | string | | 前の管理者の表示名 |
+| contact | string | | 前の管理者の連絡先 |
+| managementDays | number | ✓ | 前の管理日数 |
+| importedAt | Date | ✓ | インポート日時 |
 
 ---
 
@@ -184,19 +197,72 @@ Location（場所）
 
 ### 7. EnvironmentLog（環境データ）
 
-場所ごとの環境データを記録する。
+場所ごとの環境データを記録する（1時間粒度）。
 
 | フィールド | 型 | 必須 | 説明 |
 |------------|-----|------|------|
 | id | string | ✓ | 一意識別子（UUID） |
 | locationId | string | ✓ | 場所ID（外部キー） |
-| timestamp | Date | ✓ | 記録日時 |
-| temperature | number | | 気温（℃） |
-| humidity | number | | 湿度（%） |
-| source | string | | データソース（手入力、IoTデバイス名など） |
-| notes | string | | メモ |
+| timestamp | Date | ✓ | 記録日時（1時間単位に丸め） |
+| temperature | number | | 気温（℃、平均値） |
+| humidity | number | | 湿度（%、平均値） |
+| source | DataSourceType | | データソース |
+| createdAt | Date | ✓ | 作成日時 |
+| updatedAt | Date | ✓ | 更新日時 |
 
 **インデックス**: `id`, `locationId`, `timestamp`, `[locationId+timestamp]`
+
+#### DataSourceType（データソース種別）
+
+| 値 | 説明 |
+|----|------|
+| switchbot-csv | SwitchBotからのCSVインポート |
+| inkbird-csv | InkbirdからのCSVインポート |
+| generic-csv | 汎用CSVインポート |
+| manual | 手入力 |
+| open-meteo | Open-Meteo API（将来対応） |
+| switchbot-api | SwitchBot API（将来対応） |
+| home-assistant | Home Assistant連携（将来対応） |
+
+---
+
+### 8. DailyEnvironmentSummary（日別環境サマリー）
+
+日ごとの環境データを集約して保存する。
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| id | string | ✓ | 一意識別子（UUID） |
+| locationId | string | ✓ | 場所ID（外部キー） |
+| date | string | ✓ | 日付（"YYYY-MM-DD"形式） |
+| tempMax | number | ✓ | 最高気温（℃） |
+| tempMin | number | ✓ | 最低気温（℃） |
+| tempAvg | number | ✓ | 平均気温（℃） |
+| humidityMax | number | | 最高湿度（%） |
+| humidityMin | number | | 最低湿度（%） |
+| humidityAvg | number | | 平均湿度（%） |
+| dataPoints | number | ✓ | 元データ件数（24件なら完全なデータ） |
+| source | DataSourceType | ✓ | データソース |
+| createdAt | Date | ✓ | 作成日時 |
+| updatedAt | Date | ✓ | 更新日時 |
+
+**インデックス**: `id`, `locationId`, `date`, `[locationId+date]`
+
+---
+
+### 9. UserProfile（ユーザープロフィール）
+
+Plant Passportエクスポート時に使用する表示名などを保存する。
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| id | string | ✓ | 固定値 'default' |
+| displayName | string | | 表示名 |
+| contact | string | | 連絡先（SNSアカウントなど） |
+| createdAt | Date | ✓ | 作成日時 |
+| updatedAt | Date | ✓ | 更新日時 |
+
+**インデックス**: `id`
 
 ---
 
@@ -206,6 +272,13 @@ Location（場所）
 import Dexie, { Table } from 'dexie'
 
 // 型定義
+export interface InheritedInfo {
+  displayName?: string
+  contact?: string
+  managementDays: number
+  importedAt: Date
+}
+
 export interface Plant {
   id: string
   name: string
@@ -215,6 +288,16 @@ export interface Plant {
   acquiredAt?: Date
   notes?: string
   isActive: boolean
+  isDead?: boolean
+  inheritedFrom?: InheritedInfo
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface UserProfile {
+  id: string  // 固定値 'default'
+  displayName?: string
+  contact?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -274,18 +357,61 @@ export interface FloweringRecord {
   updatedAt: Date
 }
 
+export type DataSourceType =
+  | 'switchbot-csv'
+  | 'inkbird-csv'
+  | 'generic-csv'
+  | 'manual'
+  | 'open-meteo'
+  | 'switchbot-api'
+  | 'home-assistant'
+
 export interface EnvironmentLog {
   id: string
   locationId: string
   timestamp: Date
   temperature?: number
   humidity?: number
-  source?: string
-  notes?: string
+  source?: DataSourceType
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface DailyEnvironmentSummary {
+  id: string
+  locationId: string
+  date: string  // "YYYY-MM-DD"
+  tempMax: number
+  tempMin: number
+  tempAvg: number
+  humidityMax?: number
+  humidityMin?: number
+  humidityAvg?: number
+  dataPoints: number
+  source: DataSourceType
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ExportData {
+  version: number
+  exportedAt: string
+  app: 'plalog'
+  data: {
+    plants: Plant[]
+    locations: Location[]
+    plantLocationHistory: PlantLocationHistory[]
+    wateringLogs: WateringLog[]
+    growthEvents: GrowthEvent[]
+    floweringRecords: FloweringRecord[]
+    environmentLogs: EnvironmentLog[]
+    dailyEnvironmentSummaries: DailyEnvironmentSummary[]
+    userProfile: UserProfile[]
+  }
 }
 
 // データベースクラス
-export class GardenDatabase extends Dexie {
+export class PlalogDatabase extends Dexie {
   plants!: Table<Plant>
   locations!: Table<Location>
   plantLocationHistory!: Table<PlantLocationHistory>
@@ -293,12 +419,15 @@ export class GardenDatabase extends Dexie {
   growthEvents!: Table<GrowthEvent>
   floweringRecords!: Table<FloweringRecord>
   environmentLogs!: Table<EnvironmentLog>
+  dailyEnvironmentSummaries!: Table<DailyEnvironmentSummary>
+  userProfile!: Table<UserProfile>
 
   constructor() {
-    super('GardenApp')
+    super('plalog')
 
+    // Version 1: 初期スキーマ
     this.version(1).stores({
-      plants: 'id, name, currentLocationId',
+      plants: 'id, name, species, currentLocationId, isActive',
       locations: 'id, name',
       plantLocationHistory: 'id, plantId, locationId, movedAt, [plantId+movedAt]',
       wateringLogs: 'id, plantId, timestamp, batchId, [plantId+timestamp]',
@@ -306,10 +435,35 @@ export class GardenDatabase extends Dexie {
       floweringRecords: 'id, plantId, budDate, floweringDate, [plantId+budDate], [plantId+floweringDate]',
       environmentLogs: 'id, locationId, timestamp, [locationId+timestamp]'
     })
+
+    // Version 2: 日別環境サマリー追加
+    this.version(2).stores({
+      plants: 'id, name, species, currentLocationId, isActive',
+      locations: 'id, name',
+      plantLocationHistory: 'id, plantId, locationId, movedAt, [plantId+movedAt]',
+      wateringLogs: 'id, plantId, timestamp, batchId, [plantId+timestamp]',
+      growthEvents: 'id, plantId, timestamp, eventType, [plantId+timestamp]',
+      floweringRecords: 'id, plantId, budDate, floweringDate, [plantId+budDate], [plantId+floweringDate]',
+      environmentLogs: 'id, locationId, timestamp, [locationId+timestamp]',
+      dailyEnvironmentSummaries: 'id, locationId, date, [locationId+date]'
+    })
+
+    // Version 3: ユーザープロフィール追加
+    this.version(3).stores({
+      plants: 'id, name, species, currentLocationId, isActive',
+      locations: 'id, name',
+      plantLocationHistory: 'id, plantId, locationId, movedAt, [plantId+movedAt]',
+      wateringLogs: 'id, plantId, timestamp, batchId, [plantId+timestamp]',
+      growthEvents: 'id, plantId, timestamp, eventType, [plantId+timestamp]',
+      floweringRecords: 'id, plantId, budDate, floweringDate, [plantId+budDate], [plantId+floweringDate]',
+      environmentLogs: 'id, locationId, timestamp, [locationId+timestamp]',
+      dailyEnvironmentSummaries: 'id, locationId, date, [locationId+date]',
+      userProfile: 'id'
+    })
   }
 }
 
-export const db = new GardenDatabase()
+export const db = new PlalogDatabase()
 ```
 
 ---
@@ -481,3 +635,4 @@ interface ExportData {
 |------|------------|----------|
 | 2024-12-28 | 1.0 | 初版作成 |
 | 2024-12-28 | 1.1 | FloweringRecord追加、GrowthEventTypeから開花関連を分離 |
+| 2024-12-30 | 1.2 | 実装に合わせて更新: isDead/inheritedFromフィールド追加、DailyEnvironmentSummary・UserProfileテーブル追加、DataSourceType定義、ExportData型追加、Dexieスキーマをv3に更新 |

@@ -243,44 +243,52 @@ Date,Temperature_Celsius(℃),Relative_Humidity(%),DPT(℃),VPD(kPa),Abs Humidit
 
 ### SwitchBot CSVパーサー
 
+SwitchBotアプリからエクスポートされるCSVフォーマットに対応。
+
 ```typescript
 // src/features/environment/services/parsers/switchbotParser.ts
 
 export const switchbotParser: CsvParser = {
   name: 'SwitchBot',
-  
+
   canParse(header: string): boolean {
-    // 実際のSwitchBotエクスポート形式に対応
-    return header.includes('Temperature_Celsius') && 
+    // SwitchBotのヘッダーフォーマットを検出
+    return header.includes('Temperature_Celsius') &&
            header.includes('Relative_Humidity')
   },
-  
+
   parse(content: string): RawEnvironmentRecord[] {
     const lines = content.trim().split('\n')
     const records: RawEnvironmentRecord[] = []
-    
+
     // ヘッダーからカラムインデックスを特定
     const header = lines[0].split(',')
     const dateIdx = header.findIndex(h => h.trim() === 'Date')
     const tempIdx = header.findIndex(h => h.includes('Temperature_Celsius'))
     const humidityIdx = header.findIndex(h => h.includes('Relative_Humidity'))
-    
+
     for (const line of lines.slice(1)) {
       if (!line.trim()) continue
-      
+
       const cols = line.split(',')
-      
+      const timestamp = new Date(cols[dateIdx])
+
+      // 無効な日付をスキップ
+      if (isNaN(timestamp.getTime())) continue
+
       records.push({
-        timestamp: new Date(cols[dateIdx]),
+        timestamp,
         temperature: parseFloat(cols[tempIdx]),
         humidity: parseFloat(cols[humidityIdx]),
       })
     }
-    
+
     return records
   },
 }
 ```
+
+**注意**: 大量データ（数万件）のインポート時にスタックオーバーフローを避けるため、実装ではループベースの集計を使用しています。
 
 ---
 
@@ -730,28 +738,46 @@ this.version(2).stores({
 ```
 src/features/environment/
 ├── components/
-│   ├── CsvImportPage.tsx          # インポート画面
-│   ├── CsvPreview.tsx             # プレビュー表示
-│   ├── ImportResultModal.tsx      # 結果表示モーダル
-│   ├── ExportHelpModal.tsx        # エクスポート方法説明
-│   ├── EnvironmentSummary.tsx     # 場所詳細の環境データ表示
-│   ├── DailyEnvironmentCard.tsx   # 日ごとのカード
-│   └── index.ts
+│   └── ExportHelpModal.tsx        # エクスポート方法説明
 ├── hooks/
-│   ├── useCsvImport.ts            # インポート処理
-│   ├── useEnvironmentLogs.ts      # 時間データ取得
-│   └── useDailySummaries.ts       # 日データ取得
+│   └── useCsvImport.ts            # インポート処理フック
+├── pages/
+│   └── CsvImportPage.tsx          # インポート画面
 ├── services/
 │   ├── importService.ts           # インポート処理
-│   ├── aggregator.ts              # 集約処理
+│   ├── aggregator.ts              # 集約処理（時間・日）
 │   └── parsers/
 │       ├── index.ts               # パーサー管理
-│       ├── switchbotParser.ts     # SwitchBot CSV
-│       └── types.ts               # パーサー型定義
+│       └── switchbotParser.ts     # SwitchBot CSV
 ├── types/
 │   └── index.ts                   # 型定義
 └── index.ts
 ```
+
+---
+
+## 実装状況
+
+### 実装済み機能
+
+| 機能 | 状態 | 備考 |
+|------|------|------|
+| SwitchBot CSVパーサー | ✅ 完了 | Temperature_Celsius, Relative_Humidity対応 |
+| 時間粒度集約 | ✅ 完了 | 1時間単位の平均値 |
+| 日粒度集約 | ✅ 完了 | 日単位の最高/最低/平均 |
+| 重複チェック | ✅ 完了 | 時間データは重複スキップ |
+| 大量データ対応 | ✅ 完了 | スタックオーバーフロー対策済み |
+| プレビュー表示 | ✅ 完了 | データ概要・期間表示 |
+| インポート結果表示 | ✅ 完了 | 追加/スキップ件数表示 |
+
+### 未実装/将来対応
+
+| 機能 | 状態 | 備考 |
+|------|------|------|
+| Inkbird CSVパーサー | 📋 計画中 | Phase 5 |
+| Open-Meteo API連携 | 📋 計画中 | Phase 2 |
+| SwitchBot API連携 | 📋 計画中 | Phase 3 |
+| Home Assistant連携 | 📋 計画中 | Phase 4 |
 
 ---
 
@@ -811,5 +837,6 @@ interface HomeAssistantConfig {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
-| 2024-12-28 | 1.1 | 2層構造（時間+日集約）採用、CSVインポート優先に変更 |
 | 2024-12-28 | 1.0 | 初版作成 |
+| 2024-12-28 | 1.1 | 2層構造（時間+日集約）採用、CSVインポート優先に変更 |
+| 2024-12-30 | 1.2 | 実装状況セクション追加、ファイル構成を実装に合わせて更新、大量データ対応の注記追加 |

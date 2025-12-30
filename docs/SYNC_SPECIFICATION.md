@@ -541,8 +541,40 @@ src/
 
 ---
 
+## 実装状況
+
+### 実装済み機能
+
+| 機能 | 状態 | 備考 |
+|------|------|------|
+| OAuth 2.0認証 | ✅ 完了 | Google Identity Services使用 |
+| App Data Folder保存 | ✅ 完了 | plalog-data.jsonとして保存 |
+| アップロード | ✅ 完了 | 新規作成・上書き更新対応 |
+| ダウンロード | ✅ 完了 | 既存データ上書き |
+| 連携解除 | ✅ 完了 | トークン破棄 |
+| エラーハンドリング | ✅ 完了 | Toast通知表示 |
+
+### 実装ファイル
+
+```
+src/features/settings/
+├── components/
+│   ├── AutoSyncNotification.tsx   # 自動同期通知
+│   └── SyncConfirmDialog.tsx      # 確認ダイアログ
+├── hooks/
+│   ├── useAutoSync.ts             # 自動同期ロジック
+│   └── useGoogleDriveSync.ts      # Google Drive同期
+├── pages/
+│   └── GoogleDriveSyncPage.tsx    # 同期画面
+└── services/
+    └── googleDriveService.ts      # Google Drive API
+```
+
+---
+
 ## 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
 | 2024-12-28 | 1.0 | 初版作成 |
+| 2024-12-30 | 1.1 | 実装状況セクション追加 |

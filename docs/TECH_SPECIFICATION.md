@@ -106,30 +106,28 @@ plalog/
 ```json
 {
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "dexie": "^4.0.0",
-    "dexie-react-hooks": "^1.1.0",
-    "uuid": "^9.0.0",
-    "date-fns": "^2.30.0",
-    "lucide-react": "^0.290.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "dexie": "^4.0.10",
+    "dexie-react-hooks": "^1.1.7",
+    "uuid": "^11.0.3",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.468.0",
+    "jspdf": "^3.0.4"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/uuid": "^9.0.0",
-    "@vitejs/plugin-react": "^4.2.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.0",
-    "eslint": "^8.50.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint": "^9.0.0",
     "postcss": "^8.4.0",
-    "prettier": "^3.1.0",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5.3.0",
-    "vite": "^5.0.0",
-    "vite-plugin-pwa": "^0.17.0",
-    "vitest": "^1.0.0"
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "vite-plugin-pwa": "^0.21.1"
   }
 }
 ```
@@ -143,6 +141,7 @@ plalog/
 | uuid | ID生成 | 標準的なUUID v4生成 |
 | date-fns | 日付操作 | 軽量、Tree-shaking対応 |
 | lucide-react | アイコン | 軽量、React対応、豊富なアイコン |
+| jspdf | PDF生成 | Plant PassportのPDF出力に使用 |
 
 ---
 
@@ -239,7 +238,14 @@ const routes = [
   // 設定
   { path: '/settings/export', element: <ExportPage /> },
   { path: '/settings/import', element: <ImportPage /> },
+  { path: '/settings/google-drive', element: <GoogleDriveSyncPage /> },
+  { path: '/settings/environment-import', element: <CsvImportPage /> },
   { path: '/about', element: <AboutPage /> },
+
+  // 追加ページ
+  { path: '/plants/:id/passport', element: <PlantPassportExportPage /> },
+  { path: '/species/:species', element: <SpeciesSummaryPage /> },
+  { path: '/watering/history', element: <WateringHistoryPage /> },
 ]
 ```
 
@@ -551,3 +557,4 @@ import type { Plant } from '@/db/models'
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
 | 2024-12-28 | 1.0 | 初版作成 |
+| 2024-12-30 | 1.1 | 実装に合わせて更新: ライブラリバージョン更新、jsPDF追加、ルーティング追加（Google Drive同期、環境データインポート、Plant Passport、種別サマリー、水やり履歴） |
