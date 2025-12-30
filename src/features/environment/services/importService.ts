@@ -24,9 +24,16 @@ export async function previewCsv(
   const hourlyCount = countHourlyRecords(rawRecords)
   const dailyCount = countDailyRecords(rawRecords)
 
-  const dates = rawRecords.map((r) => r.timestamp.getTime())
-  const minDate = new Date(Math.min(...dates))
-  const maxDate = new Date(Math.max(...dates))
+  // 大量データでもスタックオーバーフローしないようにループで最小・最大を計算
+  let minTime = rawRecords[0].timestamp.getTime()
+  let maxTime = minTime
+  for (const record of rawRecords) {
+    const time = record.timestamp.getTime()
+    if (time < minTime) minTime = time
+    if (time > maxTime) maxTime = time
+  }
+  const minDate = new Date(minTime)
+  const maxDate = new Date(maxTime)
 
   return {
     format: parser.name,
