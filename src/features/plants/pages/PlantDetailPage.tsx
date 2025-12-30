@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Droplets, Flower2, Calendar, ChevronRight } from 'lucide-react'
+import { Droplets, Flower2, Calendar, ChevronRight, FileDown } from 'lucide-react'
 import { db } from '@/db/database'
 import { Header, PageLayout } from '@/components/layout'
 import { Button, Modal } from '@/components/ui'
@@ -65,9 +65,18 @@ export function PlantDetailPage() {
         title={plant.name}
         showBack
         rightAction={
-          <Button size="sm" variant="secondary" onClick={() => setIsEditModalOpen(true)}>
-            編集
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => navigate(`/plants/${plant.id}/passport`)}
+            >
+              <FileDown size={16} />
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setIsEditModalOpen(true)}>
+              編集
+            </Button>
+          </div>
         }
       />
       <PageLayout noPadding>
