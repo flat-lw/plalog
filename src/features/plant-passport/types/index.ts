@@ -11,6 +11,7 @@ export interface PlantPassport {
   }
 
   plant: {
+    name?: string
     species?: string
     acquiredAt?: string
     notes?: string

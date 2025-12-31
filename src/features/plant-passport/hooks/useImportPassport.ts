@@ -55,7 +55,7 @@ export function useImportPassport() {
 
       // PlantFormDataに変換
       const formData: PlantFormData = {
-        name: '', // ユーザーに入力してもらう（エクスポートには含まれていない）
+        name: passport.plant.name || '',
         species: passport.plant.species,
         acquiredAt: passport.plant.acquiredAt ? new Date(passport.plant.acquiredAt) : undefined,
         notes: passport.plant.notes,
