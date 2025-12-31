@@ -26,6 +26,11 @@ export async function generatePlantPassportPdf(
   // 基本情報
   doc.setFontSize(11)
 
+  if (passport.plant.name) {
+    doc.text(`Plant Name: ${passport.plant.name}`, 20, y)
+    y += 7
+  }
+
   if (passport.plant.species) {
     doc.text(`Species: ${passport.plant.species}`, 20, y)
     y += 7

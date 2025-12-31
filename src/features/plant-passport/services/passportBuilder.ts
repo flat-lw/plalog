@@ -58,6 +58,7 @@ export async function buildPlantPassport(
       contact: userProfile?.contact,
     },
     plant: {
+      name: plant.name,
       species: plant.species,
       acquiredAt: acquiredAt ? format(acquiredAt, 'yyyy-MM-dd') : undefined,
       notes: options.publicNotes,
