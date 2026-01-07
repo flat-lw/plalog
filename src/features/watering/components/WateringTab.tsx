@@ -50,11 +50,9 @@ export function WateringTab({ plantId }: WateringTabProps) {
     showToast('水やりを記録しました')
   }
 
-  if (!wateringLogs) return null
-
   return (
     <>
-      {wateringLogs.length === 0 ? (
+      {!wateringLogs || wateringLogs.length === 0 ? (
         <EmptyState
           icon={<Droplets size={48} />}
           title="水やり記録がありません"

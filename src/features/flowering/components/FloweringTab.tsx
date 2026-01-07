@@ -93,8 +93,6 @@ export function FloweringTab({ plantId }: FloweringTabProps) {
     }
   }
 
-  if (!floweringRecords) return null
-
   const formatRecordDates = (record: FloweringRecord) => {
     const parts: string[] = []
     if (record.budDate) parts.push(`蕾: ${formatDate(record.budDate)}`)
@@ -106,7 +104,7 @@ export function FloweringTab({ plantId }: FloweringTabProps) {
 
   return (
     <>
-      {floweringRecords.length === 0 ? (
+      {!floweringRecords || floweringRecords.length === 0 ? (
         <EmptyState
           icon={<Flower2 size={48} />}
           title="開花記録がありません"
