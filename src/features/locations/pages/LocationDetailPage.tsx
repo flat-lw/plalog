@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Thermometer } from 'lucide-react'
@@ -10,6 +10,7 @@ import { LocationForm, type LocationFormData } from '../components/LocationForm'
 import { locationRepository, environmentRepository } from '@/db/repositories'
 import { useToast } from '@/hooks/useToast'
 import { formatDateTime, formatDateTimeForInput } from '@/utils/date'
+import type { Location } from '@/db/models'
 
 export function LocationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,6 +22,7 @@ export function LocationDetailPage() {
   const [temperature, setTemperature] = useState('')
   const [humidity, setHumidity] = useState('')
   const [notes, setNotes] = useState('')
+  const [stableLocation, setStableLocation] = useState<Location | null>(null)
 
   const location = useLiveQuery(() => (id ? db.locations.get(id) : undefined), [id])
   const plants = useLiveQuery(
@@ -35,26 +37,34 @@ export function LocationDetailPage() {
     [id]
   )
 
-  if (!location) {
+  // locationが有効な値の時のみstableLocationを更新
+  useEffect(() => {
+    if (location) {
+      setStableLocation(location)
+    }
+  }, [location])
+
+  // 初回ロード時にlocationがまだ取得されていない場合
+  if (!stableLocation) {
     return (
       <>
-        <Header title="場所詳細" showBack />
+        <Header title="読み込み中..." showBack />
         <PageLayout>
-          <p className="text-center text-gray-500 py-8">場所が見つかりません</p>
+          <div className="text-center text-gray-500 py-8">読み込み中...</div>
         </PageLayout>
       </>
     )
   }
 
   const handleUpdate = async (data: LocationFormData) => {
-    await locationRepository.update(location.id, data)
+    await locationRepository.update(stableLocation.id, data)
     setIsEditModalOpen(false)
     showToast('場所を更新しました')
   }
 
   const handleDelete = async () => {
     if (confirm('この場所を削除しますか？')) {
-      await locationRepository.delete(location.id)
+      await locationRepository.delete(stableLocation.id)
       showToast('場所を削除しました')
       navigate('/locations')
     }
@@ -74,7 +84,7 @@ export function LocationDetailPage() {
     }
 
     await environmentRepository.create({
-      locationId: location.id,
+      locationId: stableLocation.id,
       timestamp: new Date(timestamp),
       temperature: temperature ? parseFloat(temperature) : undefined,
       humidity: humidity ? parseFloat(humidity) : undefined,
@@ -88,7 +98,7 @@ export function LocationDetailPage() {
   return (
     <>
       <Header
-        title={location.name}
+        title={stableLocation.name}
         showBack
         rightAction={
           <Button size="sm" variant="secondary" onClick={() => setIsEditModalOpen(true)}>
@@ -98,9 +108,9 @@ export function LocationDetailPage() {
       />
       <PageLayout noPadding>
         {/* 場所情報 */}
-        {location.description && (
+        {stableLocation.description && (
           <div className="p-4 bg-white border-b">
-            <p className="text-sm text-gray-600">説明: {location.description}</p>
+            <p className="text-sm text-gray-600">説明: {stableLocation.description}</p>
           </div>
         )}
 
@@ -170,7 +180,7 @@ export function LocationDetailPage() {
         title="場所を編集"
       >
         <LocationForm
-          location={location}
+          location={stableLocation}
           onSubmit={handleUpdate}
           onCancel={() => setIsEditModalOpen(false)}
         />
