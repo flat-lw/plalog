@@ -59,11 +59,9 @@ export function GrowthEventTab({ plantId }: GrowthEventTabProps) {
     label: `${EVENT_ICONS[value as GrowthEventType]} ${label}`,
   }))
 
-  if (!growthEvents) return null
-
   return (
     <>
-      {growthEvents.length === 0 ? (
+      {!growthEvents || growthEvents.length === 0 ? (
         <EmptyState
           icon={<Calendar size={48} />}
           title="成長イベントがありません"
