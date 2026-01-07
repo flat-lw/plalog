@@ -74,9 +74,7 @@ export function SpeciesSummaryPage() {
     return location?.name || null
   }
 
-  if (!plants) return null
-
-  if (plants.length === 0) {
+  if (!plants || plants.length === 0) {
     return (
       <>
         <Header title={decodedSpecies || '種名'} showBack />
