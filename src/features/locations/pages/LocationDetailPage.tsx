@@ -39,18 +39,38 @@ export function LocationDetailPage() {
 
   // locationが有効な値の時のみstableLocationを更新
   useEffect(() => {
+    console.log('[LocationDetailPage] location changed:', location ? 'valid object' : location)
     if (location) {
       setStableLocation(location)
+      console.log('[LocationDetailPage] stableLocation updated')
+    } else if (location === null) {
+      // データが存在しない場合はstableLocationもnullにする
+      setStableLocation(null)
+      console.log('[LocationDetailPage] location is null, cleared stableLocation')
     }
   }, [location])
 
-  // 初回ロード時にlocationがまだ取得されていない場合
-  if (!stableLocation) {
+  // useLiveQueryの初期undefined状態と、データが存在しない状態を区別
+  const isLoading = location === undefined && stableLocation === null
+
+  if (isLoading) {
     return (
       <>
         <Header title="読み込み中..." showBack />
         <PageLayout>
           <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        </PageLayout>
+      </>
+    )
+  }
+
+  // データが存在しない場合
+  if (!stableLocation) {
+    return (
+      <>
+        <Header title="場所詳細" showBack />
+        <PageLayout>
+          <div className="text-center text-gray-500 py-8">場所が見つかりません</div>
         </PageLayout>
       </>
     )

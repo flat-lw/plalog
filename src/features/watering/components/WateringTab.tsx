@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Droplets } from 'lucide-react'
 import { db } from '@/db/database'
@@ -31,6 +31,10 @@ export function WateringTab({ plantId }: WateringTabProps) {
     () => db.wateringLogs.where('plantId').equals(plantId).reverse().sortBy('timestamp'),
     [plantId]
   )
+
+  useEffect(() => {
+    console.log('[WateringTab] wateringLogs changed:', wateringLogs ? `${wateringLogs.length} logs` : wateringLogs)
+  }, [wateringLogs])
 
   const openModal = () => {
     setSelectedDateTime(getLocalDateTimeString(new Date()))

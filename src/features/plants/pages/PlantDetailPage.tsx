@@ -32,18 +32,39 @@ export function PlantDetailPage() {
 
   // plantが有効な値の時のみstablePlantを更新
   useEffect(() => {
+    console.log('[PlantDetailPage] plant changed:', plant ? 'valid object' : plant)
     if (plant) {
       setStablePlant(plant)
+      console.log('[PlantDetailPage] stablePlant updated')
+    } else if (plant === null) {
+      // データが存在しない場合はstablePlantもnullにする
+      setStablePlant(null)
+      console.log('[PlantDetailPage] plant is null, cleared stablePlant')
     }
   }, [plant])
 
-  // 初回ロード時にplantがまだ取得されていない場合
-  if (!stablePlant) {
+  // useLiveQueryの初期undefined状態と、データが存在しない状態を区別
+  // plantがundefinedでない（nullまたは有効なオブジェクト）場合、クエリは完了している
+  const isLoading = plant === undefined && stablePlant === null
+
+  if (isLoading) {
     return (
       <>
         <Header title="読み込み中..." showBack />
         <PageLayout>
           <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        </PageLayout>
+      </>
+    )
+  }
+
+  // データが存在しない場合（plantがnullまたはstablePlantがnull）
+  if (!stablePlant) {
+    return (
+      <>
+        <Header title="植物詳細" showBack />
+        <PageLayout>
+          <div className="text-center text-gray-500 py-8">植物が見つかりません</div>
         </PageLayout>
       </>
     )
