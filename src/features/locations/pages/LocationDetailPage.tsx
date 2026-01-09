@@ -24,33 +24,83 @@ export function LocationDetailPage() {
   const [notes, setNotes] = useState('')
   const [stableLocation, setStableLocation] = useState<Location | null>(null)
 
-  const location = useLiveQuery(() => (id ? db.locations.get(id) : undefined), [id])
-  const plants = useLiveQuery(
-    () => (id ? db.plants.filter((p) => p.isActive && p.currentLocationId === id).toArray() : []),
-    [id]
-  )
-  const environmentLogs = useLiveQuery(
-    () =>
-      id
-        ? db.environmentLogs.where('locationId').equals(id).reverse().sortBy('timestamp')
-        : [],
-    [id]
-  )
+  const location = useLiveQuery(async () => {
+    if (!id) return undefined
+    const loc = await db.locations.get(id)
+    if (!loc) return null
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return {
+      ...loc,
+      createdAt: new Date(loc.createdAt),
+      updatedAt: new Date(loc.updatedAt),
+    }
+  }, [id])
+
+  const plants = useLiveQuery(async () => {
+    if (!id) return []
+    const plantList = await db.plants.filter((p) => p.isActive && p.currentLocationId === id).toArray()
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return plantList.map(p => ({
+      ...p,
+      plantedAt: p.plantedAt ? new Date(p.plantedAt) : undefined,
+      acquiredAt: p.acquiredAt ? new Date(p.acquiredAt) : undefined,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      inheritedFrom: p.inheritedFrom ? {
+        ...p.inheritedFrom,
+        importedAt: new Date(p.inheritedFrom.importedAt),
+      } : undefined,
+    }))
+  }, [id])
+  const environmentLogs = useLiveQuery(async () => {
+    if (!id) return []
+    const logs = await db.environmentLogs.where('locationId').equals(id).reverse().sortBy('timestamp')
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return logs.map(log => ({
+      ...log,
+      timestamp: new Date(log.timestamp),
+      createdAt: log.createdAt ? new Date(log.createdAt) : undefined,
+      updatedAt: log.updatedAt ? new Date(log.updatedAt) : undefined,
+    }))
+  }, [id])
 
   // locationが有効な値の時のみstableLocationを更新
   useEffect(() => {
+    console.log('[LocationDetailPage] location changed:', location ? 'valid object' : location)
     if (location) {
       setStableLocation(location)
+      console.log('[LocationDetailPage] stableLocation updated')
+    } else if (location === null) {
+      // データが存在しない場合はstableLocationもnullにする
+      setStableLocation(null)
+      console.log('[LocationDetailPage] location is null, cleared stableLocation')
     }
   }, [location])
 
-  // 初回ロード時にlocationがまだ取得されていない場合
-  if (!stableLocation) {
+  // useLiveQueryの初期undefined状態と、データが存在しない状態を区別
+  const isLoading = location === undefined && stableLocation === null
+
+  if (isLoading) {
     return (
       <>
         <Header title="読み込み中..." showBack />
         <PageLayout>
           <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        </PageLayout>
+      </>
+    )
+  }
+
+  // データが存在しない場合
+  if (!stableLocation) {
+    return (
+      <>
+        <Header title="場所詳細" showBack />
+        <PageLayout>
+          <div className="text-center text-gray-500 py-8">場所が見つかりません</div>
         </PageLayout>
       </>
     )

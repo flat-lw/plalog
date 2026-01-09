@@ -25,7 +25,19 @@ export function FloweringTab({ plantId }: FloweringTabProps) {
 
   const floweringRecords = useLiveQuery(async () => {
     const records = await db.floweringRecords.where('plantId').equals(plantId).toArray()
-    return records.sort((a, b) => {
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    const normalizedRecords = records.map(record => ({
+      ...record,
+      budDate: record.budDate ? new Date(record.budDate) : undefined,
+      floweringDate: record.floweringDate ? new Date(record.floweringDate) : undefined,
+      wiltedDate: record.wiltedDate ? new Date(record.wiltedDate) : undefined,
+      fruitRipeDate: record.fruitRipeDate ? new Date(record.fruitRipeDate) : undefined,
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
+    }))
+
+    return normalizedRecords.sort((a, b) => {
       const dateA = a.budDate ?? a.floweringDate ?? a.createdAt
       const dateB = b.budDate ?? b.floweringDate ?? b.createdAt
       return dateB.getTime() - dateA.getTime()

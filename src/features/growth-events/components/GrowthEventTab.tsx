@@ -31,10 +31,15 @@ export function GrowthEventTab({ plantId }: GrowthEventTabProps) {
   const [notes, setNotes] = useState('')
   const { showToast } = useToast()
 
-  const growthEvents = useLiveQuery(
-    () => db.growthEvents.where('plantId').equals(plantId).reverse().sortBy('timestamp'),
-    [plantId]
-  )
+  const growthEvents = useLiveQuery(async () => {
+    const events = await db.growthEvents.where('plantId').equals(plantId).reverse().sortBy('timestamp')
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return events.map(event => ({
+      ...event,
+      timestamp: new Date(event.timestamp),
+    }))
+  }, [plantId])
 
   const resetForm = () => {
     setEventType('transplant')

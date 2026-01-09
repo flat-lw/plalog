@@ -24,26 +24,73 @@ export function PlantDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [stablePlant, setStablePlant] = useState<Plant | null>(null)
 
-  const plant = useLiveQuery(() => (id ? db.plants.get(id) : undefined), [id])
-  const location = useLiveQuery(
-    () => (stablePlant?.currentLocationId ? db.locations.get(stablePlant.currentLocationId) : undefined),
-    [stablePlant?.currentLocationId]
-  )
+  const plant = useLiveQuery(async () => {
+    if (!id) return undefined
+    const p = await db.plants.get(id)
+    if (!p) return null
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return {
+      ...p,
+      plantedAt: p.plantedAt ? new Date(p.plantedAt) : undefined,
+      acquiredAt: p.acquiredAt ? new Date(p.acquiredAt) : undefined,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      inheritedFrom: p.inheritedFrom ? {
+        ...p.inheritedFrom,
+        importedAt: new Date(p.inheritedFrom.importedAt),
+      } : undefined,
+    }
+  }, [id])
+
+  const location = useLiveQuery(async () => {
+    if (!stablePlant?.currentLocationId) return undefined
+    const loc = await db.locations.get(stablePlant.currentLocationId)
+    if (!loc) return null
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return {
+      ...loc,
+      createdAt: new Date(loc.createdAt),
+      updatedAt: new Date(loc.updatedAt),
+    }
+  }, [stablePlant?.currentLocationId])
 
   // plantが有効な値の時のみstablePlantを更新
   useEffect(() => {
+    console.log('[PlantDetailPage] plant changed:', plant ? 'valid object' : plant)
     if (plant) {
       setStablePlant(plant)
+      console.log('[PlantDetailPage] stablePlant updated')
+    } else if (plant === null) {
+      // データが存在しない場合はstablePlantもnullにする
+      setStablePlant(null)
+      console.log('[PlantDetailPage] plant is null, cleared stablePlant')
     }
   }, [plant])
 
-  // 初回ロード時にplantがまだ取得されていない場合
-  if (!stablePlant) {
+  // useLiveQueryの初期undefined状態と、データが存在しない状態を区別
+  // plantがundefinedでない（nullまたは有効なオブジェクト）場合、クエリは完了している
+  const isLoading = plant === undefined && stablePlant === null
+
+  if (isLoading) {
     return (
       <>
         <Header title="読み込み中..." showBack />
         <PageLayout>
           <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        </PageLayout>
+      </>
+    )
+  }
+
+  // データが存在しない場合（plantがnullまたはstablePlantがnull）
+  if (!stablePlant) {
+    return (
+      <>
+        <Header title="植物詳細" showBack />
+        <PageLayout>
+          <div className="text-center text-gray-500 py-8">植物が見つかりません</div>
         </PageLayout>
       </>
     )
