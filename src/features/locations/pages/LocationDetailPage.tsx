@@ -24,18 +24,48 @@ export function LocationDetailPage() {
   const [notes, setNotes] = useState('')
   const [stableLocation, setStableLocation] = useState<Location | null>(null)
 
-  const location = useLiveQuery(() => (id ? db.locations.get(id) : undefined), [id])
-  const plants = useLiveQuery(
-    () => (id ? db.plants.filter((p) => p.isActive && p.currentLocationId === id).toArray() : []),
-    [id]
-  )
-  const environmentLogs = useLiveQuery(
-    () =>
-      id
-        ? db.environmentLogs.where('locationId').equals(id).reverse().sortBy('timestamp')
-        : [],
-    [id]
-  )
+  const location = useLiveQuery(async () => {
+    if (!id) return undefined
+    const loc = await db.locations.get(id)
+    if (!loc) return null
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return {
+      ...loc,
+      createdAt: new Date(loc.createdAt),
+      updatedAt: new Date(loc.updatedAt),
+    }
+  }, [id])
+
+  const plants = useLiveQuery(async () => {
+    if (!id) return []
+    const plantList = await db.plants.filter((p) => p.isActive && p.currentLocationId === id).toArray()
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return plantList.map(p => ({
+      ...p,
+      plantedAt: p.plantedAt ? new Date(p.plantedAt) : undefined,
+      acquiredAt: p.acquiredAt ? new Date(p.acquiredAt) : undefined,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      inheritedFrom: p.inheritedFrom ? {
+        ...p.inheritedFrom,
+        importedAt: new Date(p.inheritedFrom.importedAt),
+      } : undefined,
+    }))
+  }, [id])
+  const environmentLogs = useLiveQuery(async () => {
+    if (!id) return []
+    const logs = await db.environmentLogs.where('locationId').equals(id).reverse().sortBy('timestamp')
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return logs.map(log => ({
+      ...log,
+      timestamp: new Date(log.timestamp),
+      createdAt: log.createdAt ? new Date(log.createdAt) : undefined,
+      updatedAt: log.updatedAt ? new Date(log.updatedAt) : undefined,
+    }))
+  }, [id])
 
   // locationが有効な値の時のみstableLocationを更新
   useEffect(() => {

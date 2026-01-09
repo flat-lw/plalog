@@ -14,9 +14,22 @@ export function SpeciesSummaryPage() {
   // 同じ種名の植物を取得
   const plants = useLiveQuery(async () => {
     if (!decodedSpecies) return []
-    return db.plants
+    const plantList = await db.plants
       .filter((p) => p.isActive && p.species === decodedSpecies)
       .toArray()
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return plantList.map(p => ({
+      ...p,
+      plantedAt: p.plantedAt ? new Date(p.plantedAt) : undefined,
+      acquiredAt: p.acquiredAt ? new Date(p.acquiredAt) : undefined,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      inheritedFrom: p.inheritedFrom ? {
+        ...p.inheritedFrom,
+        importedAt: new Date(p.inheritedFrom.importedAt),
+      } : undefined,
+    }))
   }, [decodedSpecies])
 
   // 植物のIDリスト
@@ -28,7 +41,16 @@ export function SpeciesSummaryPage() {
     .filter((id): id is string => !!id) || []
 
   // 場所を取得
-  const locations = useLiveQuery(() => db.locations.toArray())
+  const locations = useLiveQuery(async () => {
+    const locs = await db.locations.toArray()
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return locs.map(loc => ({
+      ...loc,
+      createdAt: new Date(loc.createdAt),
+      updatedAt: new Date(loc.updatedAt),
+    }))
+  })
 
   // 環境データから最低・最高気温を取得
   const environmentStats = useLiveQuery(async () => {
@@ -50,17 +72,27 @@ export function SpeciesSummaryPage() {
   // 開花記録を取得
   const floweringRecords = useLiveQuery(async () => {
     if (plantIds.length === 0) return []
-    return db.floweringRecords
+    const records = await db.floweringRecords
       .where('plantId')
       .anyOf(plantIds)
       .toArray()
-      .then((records) =>
-        records.sort((a, b) => {
-          const dateA = a.floweringDate ?? a.budDate ?? a.createdAt
-          const dateB = b.floweringDate ?? b.budDate ?? b.createdAt
-          return dateB.getTime() - dateA.getTime()
-        })
-      )
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    const normalizedRecords = records.map(record => ({
+      ...record,
+      budDate: record.budDate ? new Date(record.budDate) : undefined,
+      floweringDate: record.floweringDate ? new Date(record.floweringDate) : undefined,
+      wiltedDate: record.wiltedDate ? new Date(record.wiltedDate) : undefined,
+      fruitRipeDate: record.fruitRipeDate ? new Date(record.fruitRipeDate) : undefined,
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
+    }))
+
+    return normalizedRecords.sort((a, b) => {
+      const dateA = a.floweringDate ?? a.budDate ?? a.createdAt
+      const dateB = b.floweringDate ?? b.budDate ?? b.createdAt
+      return dateB.getTime() - dateA.getTime()
+    })
   }, [plantIds.join(',')])
 
   const getPlantName = (plantId: string): string => {

@@ -27,10 +27,15 @@ export function WateringTab({ plantId }: WateringTabProps) {
   const [selectedDateTime, setSelectedDateTime] = useState('')
   const { showToast } = useToast()
 
-  const wateringLogs = useLiveQuery(
-    () => db.wateringLogs.where('plantId').equals(plantId).reverse().sortBy('timestamp'),
-    [plantId]
-  )
+  const wateringLogs = useLiveQuery(async () => {
+    const logs = await db.wateringLogs.where('plantId').equals(plantId).reverse().sortBy('timestamp')
+
+    // 日付データをDateオブジェクトに変換（文字列の場合に対応）
+    return logs.map(log => ({
+      ...log,
+      timestamp: new Date(log.timestamp),
+    }))
+  }, [plantId])
 
   useEffect(() => {
     console.log('[WateringTab] wateringLogs changed:', wateringLogs ? `${wateringLogs.length} logs` : wateringLogs)
