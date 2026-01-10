@@ -28,11 +28,8 @@ export function useGoogleDriveSync() {
       // 連携フラグを保存
       googleDriveService.setConnected(true)
 
-      // 既存のファイルがあれば最終同期日時を取得
+      // 既存のファイルがあれば表示用に最終同期日時を取得（lastSyncTimeは設定しない）
       const metadata = await googleDriveService.getFileMetadata()
-      if (metadata?.modifiedTime) {
-        googleDriveService.setLastSyncTime(metadata.modifiedTime)
-      }
 
       setState({
         isAuthenticated: true,
@@ -67,6 +64,26 @@ export function useGoogleDriveSync() {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
     try {
+      // Drive側のファイルメタデータを取得して日時比較
+      const metadata = await googleDriveService.getFileMetadata()
+      const lastLocalSync = googleDriveService.getLastSyncTime()
+
+      if (metadata && lastLocalSync) {
+        const driveModifiedTime = new Date(metadata.modifiedTime).getTime()
+        const localSyncTime = new Date(lastLocalSync).getTime()
+
+        // Drive側の方が新しい場合は警告
+        if (driveModifiedTime > localSyncTime) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error:
+              'Google Drive上のデータの方が新しい可能性があります。先にGoogle Driveから復元することをお勧めします。',
+          }))
+          return false
+        }
+      }
+
       const data = await getAllData()
       await googleDriveService.upload(data)
 
@@ -94,6 +111,34 @@ export function useGoogleDriveSync() {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
     try {
+      // Drive側のファイルメタデータを取得して日時比較
+      const metadata = await googleDriveService.getFileMetadata()
+      const lastLocalSync = googleDriveService.getLastSyncTime()
+
+      if (!metadata) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: 'Google Drive上にデータが見つかりません。',
+        }))
+        return false
+      }
+
+      if (lastLocalSync) {
+        const driveModifiedTime = new Date(metadata.modifiedTime).getTime()
+        const localSyncTime = new Date(lastLocalSync).getTime()
+
+        // ローカルの方が新しい、または同じ場合はスキップ
+        if (driveModifiedTime <= localSyncTime) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: 'すでに最新のデータです。復元は不要です。',
+          }))
+          return false
+        }
+      }
+
       const syncData = await googleDriveService.download()
       await importDataFromObject(syncData.data)
 
