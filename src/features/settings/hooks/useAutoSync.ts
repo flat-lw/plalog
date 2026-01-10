@@ -45,17 +45,19 @@ export function useAutoSync() {
       return
     }
 
-    setState({ status: 'authenticating', message: '認証を確認中...' })
+    // 既に認証済みでない場合のみサイレント認証を試みる
+    if (!googleDriveService.isAuthenticated()) {
+      setState({ status: 'authenticating', message: '認証を確認中...' })
 
-    // サイレント認証を試みる
-    const authenticated = await googleDriveService.silentAuthenticate()
+      const authenticated = await googleDriveService.silentAuthenticate()
 
-    if (!authenticated) {
-      setState({
-        status: 'auth_required',
-        message: 'Google Driveとの再認証が必要です'
-      })
-      return
+      if (!authenticated) {
+        setState({
+          status: 'auth_required',
+          message: 'Google Driveとの再認証が必要です'
+        })
+        return
+      }
     }
 
     setState({ status: 'comparing', message: 'データを確認中...' })
