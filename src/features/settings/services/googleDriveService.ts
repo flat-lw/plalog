@@ -6,6 +6,8 @@ const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'
 const FILE_NAME = 'plalog-data.json'
 const STORAGE_KEY_CONNECTED = 'plalog_gdrive_connected'
 const STORAGE_KEY_LAST_SYNC = 'plalog_gdrive_last_sync'
+const STORAGE_KEY_TOKEN = 'plalog_gdrive_token'
+const STORAGE_KEY_TOKEN_EXPIRES = 'plalog_gdrive_token_expires'
 
 export interface GoogleDriveSyncData {
   version: number
@@ -28,6 +30,38 @@ class GoogleDriveService {
   private accessToken: string | null = null
   private tokenExpiresAt: number | null = null
 
+  constructor() {
+    // localStorage からトークンを復元
+    this.loadTokenFromStorage()
+  }
+
+  private loadTokenFromStorage(): void {
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN)
+    const expiresAt = localStorage.getItem(STORAGE_KEY_TOKEN_EXPIRES)
+
+    if (token && expiresAt) {
+      const expiresAtNum = parseInt(expiresAt, 10)
+      // トークンが有効期限内の場合のみ復元
+      if (Date.now() < expiresAtNum) {
+        this.accessToken = token
+        this.tokenExpiresAt = expiresAtNum
+      } else {
+        // 期限切れの場合は削除
+        this.clearTokenFromStorage()
+      }
+    }
+  }
+
+  private saveTokenToStorage(token: string, expiresAt: number): void {
+    localStorage.setItem(STORAGE_KEY_TOKEN, token)
+    localStorage.setItem(STORAGE_KEY_TOKEN_EXPIRES, expiresAt.toString())
+  }
+
+  private clearTokenFromStorage(): void {
+    localStorage.removeItem(STORAGE_KEY_TOKEN)
+    localStorage.removeItem(STORAGE_KEY_TOKEN_EXPIRES)
+  }
+
   isAuthenticated(): boolean {
     if (!this.accessToken || !this.tokenExpiresAt) return false
     return Date.now() < this.tokenExpiresAt
@@ -48,6 +82,7 @@ class GoogleDriveService {
     } else {
       localStorage.removeItem(STORAGE_KEY_CONNECTED)
       localStorage.removeItem(STORAGE_KEY_LAST_SYNC)
+      this.clearTokenFromStorage()
     }
   }
 
@@ -79,6 +114,7 @@ class GoogleDriveService {
           }
           this.accessToken = response.access_token
           this.tokenExpiresAt = Date.now() + response.expires_in * 1000
+          this.saveTokenToStorage(this.accessToken, this.tokenExpiresAt)
           resolve()
         },
         error_callback: (error) => {
@@ -112,6 +148,7 @@ class GoogleDriveService {
           }
           this.accessToken = response.access_token
           this.tokenExpiresAt = Date.now() + response.expires_in * 1000
+          this.saveTokenToStorage(this.accessToken, this.tokenExpiresAt)
           resolve(true)
         },
         error_callback: () => {
@@ -132,6 +169,7 @@ class GoogleDriveService {
     }
     this.accessToken = null
     this.tokenExpiresAt = null
+    this.clearTokenFromStorage()
   }
 
   private async findFile(): Promise<string | null> {
