@@ -61,6 +61,7 @@ export type GrowthEventType =
   | 'dormancy_start'
   | 'dormancy_end'
   | 'death'
+  | 'location_change'
   | 'other'
 
 export const GROWTH_EVENT_LABELS: Record<GrowthEventType, string> = {
@@ -71,6 +72,7 @@ export const GROWTH_EVENT_LABELS: Record<GrowthEventType, string> = {
   dormancy_start: '休眠開始',
   dormancy_end: '休眠終了',
   death: '枯死',
+  location_change: '場所変更',
   other: 'その他',
 }
 

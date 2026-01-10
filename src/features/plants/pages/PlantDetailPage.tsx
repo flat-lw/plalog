@@ -9,7 +9,7 @@ import { PlantForm, type PlantFormData } from '@/features/plants'
 import { WateringTab } from '@/features/watering/components/WateringTab'
 import { FloweringTab } from '@/features/flowering/components/FloweringTab'
 import { GrowthEventTab } from '@/features/growth-events/components/GrowthEventTab'
-import { plantRepository } from '@/db/repositories'
+import { plantRepository, growthEventRepository } from '@/db/repositories'
 import { useToast } from '@/hooks/useToast'
 import { formatDate } from '@/utils/date'
 import type { Plant } from '@/db/models'
@@ -97,6 +97,27 @@ export function PlantDetailPage() {
   }
 
   const handleUpdate = async (data: PlantFormData) => {
+    // 場所が変更されたか確認
+    const locationChanged = stablePlant.currentLocationId !== data.currentLocationId
+
+    if (locationChanged) {
+      // 変更前後の場所名を取得
+      const oldLocationName = stablePlant.currentLocationId
+        ? (await db.locations.get(stablePlant.currentLocationId))?.name || '不明'
+        : 'なし'
+      const newLocationName = data.currentLocationId
+        ? (await db.locations.get(data.currentLocationId))?.name || '不明'
+        : 'なし'
+
+      // 場所変更イベントを記録
+      await growthEventRepository.create({
+        plantId: stablePlant.id,
+        timestamp: new Date(),
+        eventType: 'location_change',
+        notes: `${oldLocationName} → ${newLocationName}`,
+      })
+    }
+
     await plantRepository.update(stablePlant.id, data)
     setIsEditModalOpen(false)
     showToast('植物を更新しました')

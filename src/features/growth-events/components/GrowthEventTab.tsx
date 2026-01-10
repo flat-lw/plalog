@@ -21,6 +21,7 @@ const EVENT_ICONS: Record<GrowthEventType, string> = {
   dormancy_start: '💤',
   dormancy_end: '☀️',
   death: '💀',
+  location_change: '📍',
   other: '📝',
 }
 
