@@ -86,7 +86,7 @@ class GoogleDriveService {
         },
       })
 
-      client.requestAccessToken({ prompt: '' })
+      client.requestAccessToken({ prompt: 'consent' })
     })
   }
 
@@ -120,7 +120,7 @@ class GoogleDriveService {
       })
 
       // prompt: 'none' でサイレント認証を試みる
-      client.requestAccessToken({ prompt: '' })
+      client.requestAccessToken({ prompt: 'none' })
     })
   }
 
